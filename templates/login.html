@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f213e, #00bcd4);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .login-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px 30px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #A0E7E5;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        input {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #A0E7E5;
+            border-radius: 5px;
+            background-color: #1c2e44;
+            color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00bcd4;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #00bcd4;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #008ba3;
+        }
+
+        .extras {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .extras a {
+            color: #A0E7E5;
+            text-decoration: none;
+        }
+
+        .extras a:hover {
+            text-decoration: underline;
+        }
+
+        .signup {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #A0E7E5;
+        }
+
+        .signup a {
+            color: #00bcd4;
+            text-decoration: none;
+        }
+
+        .signup a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>user Login</h2>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form method="POST">
+            <label for="email">Email ID:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <div class="extras">
+                <label>
+                    <input type="checkbox" name="remember"> Remember me
+                </label>
+                <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+            </div>
+            <button type="submit">Sign In</button>
+        </form>
+        <div class="signup">
+            Not a member? <a href="{{ url_for('register') }}">Sign up now</a>
+        </div>
+    </div>
+</body>
+</html>

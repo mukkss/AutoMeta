@@ -7,7 +7,8 @@ import time
 import logging
 import datetime
 from pymongo import MongoClient
-from datetime import datetime
+# from datetime import datetime
+import re
 
 # Dlib  / Use frontal face detector of Dlib
 detector = dlib.get_frontal_face_detector()
@@ -151,56 +152,67 @@ class Face_Recognizer:
 
     
  # insert data in database
-    def attendance(self, name):
-        # Create a new entry in the database
-        def get_current_hour():
-            TIME_SLOTS = [
-            {"hour": 1, "start": "09:00", "end": "09:55"},
-            {"hour": 2, "start": "10:15", "end": "11:10"},
-            {"hour": 3, "start": "11:10", "end": "12:05"},
-            {"hour": 4, "start": "13:00", "end": "13:55"},
-            {"hour": 5, "start": "13:55", "end": "14:45"},
-            {"hour": 6, "start": "14:55", "end": "15:40"},
-            {"hour": 7, "start": "15:40", "end": "16:35"},
-            {"hour": 8, "start": "16:35", "end": "23:55"},
-            ]
-            current_time = datetime.now().strftime('%H:%M')  # Current time in HH:MM format
-            
-            for slot in TIME_SLOTS:
-                if slot["start"] <= current_time <= slot["end"]:
-                    return slot["hour"]
-            
-            return None  # Return None if no matching slot is found
-        # Get the current date and hour
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        current_hour = get_current_hour() # Determine the hour based on the current time
+    def attendance(self, full_name_with_usn):
 
-        if current_hour is None:
-            print("Current time does not fall into any predefined time slot.")
+    # Get the current date
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        
+        # Get the current time (for insertion)
+        current_time = datetime.datetime.now().strftime('%H:%M:%S')
+
+        # Determine current hour based on the time
+        current_hour = 0  # Default if not in any time range
+        current_hour_mapping = [
+            ("09:00:00", "10:00:00", 1),
+            ("10:00:00", "11:10:00", 2),
+            ("11:10:00", "12:05:00", 3),
+            ("12:05:00", "13:00:00", 4),
+            ("13:00:00", "13:55:00", 5),
+            ("13:55:00", "14:45:00", 6),
+            ("14:55:00", "15:40:00", 7),
+            ("15:40:00", "23:59:00", 8),
+        ]
+
+        current_time_obj = datetime.datetime.strptime(current_time, '%H:%M:%S')
+        for start_time, end_time, hour in current_hour_mapping:
+            start_time_obj = datetime.datetime.strptime(start_time, '%H:%M:%S')
+            end_time_obj = datetime.datetime.strptime(end_time, '%H:%M:%S')
+            if start_time_obj <= current_time_obj < end_time_obj:
+                current_hour = hour
+                break
+        if current_hour == 0:
+            print("Attendance marking failed: Current time does not match any predefined hour.")
             return
 
-        # Get the exact current time for logging
-        current_time = datetime.now().strftime('%H:%M:%S')
+        # Split the name and USN from the input
+        match = re.match(r"^\s*(.+)\s*\((.+)\)\s*$", full_name_with_usn.strip())
+        if match:
+            name = match.group(1)  # Extracts the name (e.g., "ashlesh")
+            usn = match.group(2)  # Extracts the USN (e.g., "4CB22AI009")
+        else:
+            print("Invalid input format. Expected 'name(USN)' format.")
+            return
 
-        # Check if the user is already marked present for this hour
+        # Check if the name, USN, date, and hour already exist in the collection
         existing_entry = attendance_collection.find_one({
             "name": name,
+            "usn": usn,
             "date": current_date,
             "hour": current_hour
         })
 
         if existing_entry:
-            print(f"{name} is already marked as present for {current_date} during hour {current_hour}.")
+            print(f"{name} ({usn}) is already marked as present for {current_date} during hour {current_hour}")
         else:
             # Insert attendance record
-            attendance_data = {
-                "name": name,
+            attendance_collection.insert_one({
+                "name": name,  # Store the extracted name
+                "usn": usn,    # Store the extracted university serial number
                 "date": current_date,
-                "hour": current_hour,
+                "hour": current_hour,  # Store the current hour
                 "time": current_time
-            }
-            attendance_collection.insert_one(attendance_data)
-            print(f"{name} marked as present for {current_date} during hour {current_hour} at {current_time}")
+            })
+            print(f"{name} ({usn}) marked as present for {current_date} during hour {current_hour} at {current_time}")
 
     #  Face detection and recognition wit OT from input video stream
     def process(self, stream):
