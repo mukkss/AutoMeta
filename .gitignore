@@ -1,0 +1,6 @@
+#models
+data/model/*.dat
+
+
+#dataset
+data/data_set/
